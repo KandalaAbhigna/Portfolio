@@ -9,7 +9,7 @@ Personal site with a retrieval-augmented AI concierge. Live at the Vercel deploy
 | `public/` | The static site: `index.html`, `css/site.css`, `assets/`. Compiled JS lands in `public/js/` (git-ignored). |
 | `src/ts/` | Front-end TypeScript. `data.ts` holds all content (projects, AI apps, jobs, skills). `render.ts` builds the DOM. `chat.ts` is the concierge client. `hero.ts` is the background canvas. |
 | `src/data/knowledge.md` | The concierge's knowledge base. Plain markdown; every `# Heading` becomes a retrievable chunk. |
-| `scripts/build-knowledge.mjs` | Splits `knowledge.md` into `api/_knowledge.json` at build time. |
+| `scripts/build-knowledge.mjs` | Splits `knowledge.md` into `api/_knowledge.ts` at build time. |
 | `api/chat.ts` | Vercel Function. BM25 retrieval over the chunks → Anthropic Messages API → server-sent events back to the browser. |
 | `api/_retrieval.ts` | BM25 ranking written from scratch, with a small synonym map and stop-word list. |
 | `legacy/` | The previous single-file site, kept for reference. |

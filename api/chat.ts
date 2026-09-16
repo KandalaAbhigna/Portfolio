@@ -1,8 +1,8 @@
 // POST /api/chat
 // Retrieval-augmented concierge: BM25 over Abhigna's knowledge base -> Claude -> SSE stream.
 // The Anthropic key is read from the ANTHROPIC_API_KEY environment variable on Vercel.
-import knowledge from "./_knowledge.json" with { type: "json" };
-import { retrieve, type Chunk } from "./_retrieval.js";
+import knowledge from "./_knowledge.js";
+import { retrieve } from "./_retrieval.js";
 
 export const config = { runtime: "nodejs" };
 
@@ -77,8 +77,7 @@ export default async function handler(req: Request): Promise<Response> {
   // Retrieval: use the latest question plus the previous user turn for context.
   const prevUser = [...messages].reverse().find((m, i) => i > 0 && m.role === "user");
   const query = prevUser ? `${last.content} ${prevUser.content}` : last.content;
-  const chunks = knowledge.chunks as Chunk[];
-  const hits = retrieve(chunks, query, 5);
+  const hits = retrieve(knowledge.chunks, query, 5);
   const context = hits.map((h) => `## ${h.title}\n${h.text}`).join("\n\n");
 
   const userTurn = `CONTEXT:\n${context || "(no matching sections)"}\n\nQUESTION: ${last.content}`;
