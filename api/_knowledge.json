@@ -1,0 +1,95 @@
+{
+  "builtAt": "2026-09-16T19:41:05.156Z",
+  "chunks": [
+    {
+      "id": "about-abhigna-kandala-1",
+      "title": "About Abhigna Kandala",
+      "text": "Abhigna Kandala is a software engineer based in College Park, Maryland. She is completing a Master of Engineering (M.Eng.) in Software Engineering at the University of Maryland, College Park, with a 4.00 GPA, and graduates in December 2026. She holds a Bachelor of Technology (B.Tech) in Computer Science and Engineering from the Kalinga Institute of Industrial Technology (KIIT) in Odisha, India, with a GPA of 8.81 out of 10 (2020 to 2024).\n\nShe positions herself as a full-stack and cloud software engineer: Python, TypeScript, React, Node.js, FastAPI, Flask, and Amazon Web Services (AWS). She is looking for full-time software engineering, full-stack, backend, cloud, and AI engineering roles starting in early 2027, and prefers New York and New Jersey but is open to relocation anywhere in the United States, including remote roles."
+    },
+    {
+      "id": "about-abhigna-kandala-2",
+      "title": "About Abhigna Kandala",
+      "text": "Contact: email k.abhigna2@gmail.com, LinkedIn linkedin.com/in/abhignakandala, GitHub github.com/KandalaAbhigna.\n\nOutside work she enjoys fitness, the outdoors, gaming (she has mentioned Spider-Man 2 on PS5), and growing herbs at home."
+    },
+    {
+      "id": "visa-salary-and-personal-topics-1",
+      "title": "Visa, salary, and personal topics",
+      "text": "This assistant does not discuss visa status, employment authorization, sponsorship, salary expectations, age, or other personal matters. For those topics, contact Abhigna directly by email at k.abhigna2@gmail.com."
+    },
+    {
+      "id": "siddhantha-t20-cloud-native-stock-prediction-platform-1",
+      "title": "Siddhantha T20: cloud-native stock prediction platform",
+      "text": "Dates: January 2026 to June 2026. Stack: Python, Flask, React, TypeScript, LightGBM, AWS (ECS Fargate, Step Functions, EventBridge, Lambda, S3, RDS MySQL, ECR, IAM).\n\nAbhigna co-built T20 as one of two engineers reporting to the tech lead. T20 scores about 4,500 tickers across five market universes (Russell 2000, Russell 1000, S&P 500, S&P 600, plus indexes and sector ETFs) with LightGBM models and serves daily Top-20 stock picks to a live web dashboard."
+    },
+    {
+      "id": "siddhantha-t20-cloud-native-stock-prediction-platform-2",
+      "title": "Siddhantha T20: cloud-native stock prediction platform",
+      "text": "She automated the end-to-end pipeline (data download, dataset build, feature engineering, prediction, statistics) as containerized ECS Fargate tasks orchestrated by AWS Step Functions and scheduled with EventBridge, replacing manual daily runs. She developed the Flask REST API over Amazon S3 datasets and RDS MySQL, served through AWS Lambda using a pre-compute pattern (the pipeline writes small JSON and CSV artifacts that Lambda reads, because Lambda cannot load large parquet files cheaply), and the React/TypeScript dashboard it powers, with fault-tolerant error handling and optimized data fetching. She integrated the Alpha Vantage market data API under its rate limit."
+    },
+    {
+      "id": "siddhantha-t20-cloud-native-stock-prediction-platform-3",
+      "title": "Siddhantha T20: cloud-native stock prediction platform",
+      "text": "She extended coverage from three to five universes and added the Russell 1000 (135,000+ feature rows across 451 tickers), fixing two latent production bugs along the way (a NaN ticker sort error and a multiprocessing pickle error caused by a nested function). She also found and fixed a silent failure-reporting defect: Step Functions reported SUCCEEDED even when a step failed, because the failure branch ended with End: true instead of a Fail state.\n\nShe backtested a proposed swing-trading strategy and delivered a clear no-go recommendation (profit factor 0.84, 32.7% win rate) that the tech lead adopted, which stopped further build-out before more engineering time was spent."
+    },
+    {
+      "id": "siddhantha-t20-cloud-native-stock-prediction-platform-4",
+      "title": "Siddhantha T20: cloud-native stock prediction platform",
+      "text": "She supervised and code-reviewed four software interns building a React-Admin frontend and a backend REST API, producing a prioritized 10-item review and a strict-TypeScript reference implementation with handover documentation."
+    },
+    {
+      "id": "terrapin-events-campus-event-management-system-1",
+      "title": "Terrapin Events: campus event management system",
+      "text": "Stack: React, TypeScript, FastAPI, MongoDB, Docker, Kubernetes, GitHub Actions. Built in a graduate software design team at the University of Maryland (ENPM613).\n\nTerrapin Events is a full-stack platform where organizers submit events for admin approval, participants register with an automated waitlist, and the system emails confirmations, QR-code tickets, and feedback requests. The FastAPI backend exposes 27 REST endpoints with JSON Web Token (JWT) role-based access control for three roles (Admin, Organizer, Participant). The React/TypeScript front end has 14 pages.\n\nTesting and delivery: 110 Vitest tests and 94 Pytest tests (87% backend coverage), and GitHub Actions CI/CD that builds and pushes Docker images and deploys to Kubernetes with Nginx ingress, cert-manager TLS, secrets, and pod autoscaling (2 to 10 replicas)."
+    },
+    {
+      "id": "digital-time-capsule-multimedia-sharing-web-app-1",
+      "title": "Digital Time Capsule: multimedia sharing web app",
+      "text": "Stack: React.js, Node.js, Express.js, MongoDB, REST APIs, AWS EC2, Nginx (MERN stack).\n\nA full-stack app for creating and sharing multimedia time capsules (photos, text, music) with friend requests, capsule access requests, contributor permissions, and public/private privacy controls. The backend has 25+ RESTful endpoints for authentication, capsule CRUD, friends, access control, and media storage, with JSON schema validation across five MongoDB collections (users, capsules, photos, text, music). The React front end has 8 pages (Welcome, Registration, MyCapsules, CurrentCapsule, Friends, Search, Profile, Settings) with reusable components and dynamic state management. It is deployed to production on AWS EC2 behind Nginx as a reverse proxy."
+    },
+    {
+      "id": "ai-concierge-the-retrieval-augmented-assistant-on-this-portfolio-1",
+      "title": "AI Concierge: the retrieval-augmented assistant on this portfolio",
+      "text": "Stack: TypeScript, Vercel Functions (Node.js), Anthropic Claude API, custom BM25 retrieval, server-sent events (SSE) streaming."
+    },
+    {
+      "id": "ai-concierge-the-retrieval-augmented-assistant-on-this-portfolio-2",
+      "title": "AI Concierge: the retrieval-augmented assistant on this portfolio",
+      "text": "The concierge on abhigna's portfolio is a retrieval-augmented generation (RAG) assistant. Her background is written as a markdown knowledge base, split into sections at build time, and indexed with a BM25 ranking function implemented from scratch in TypeScript (no vector database). At request time the server tokenizes the visitor's question, scores every chunk, sends the top-ranked chunks to Claude as context with a system prompt that forbids inventing facts, and streams the answer back to the browser over server-sent events. The retrieved sections are shown to the visitor as citations, so the retrieval step is visible rather than hidden. The API key lives only in Vercel's environment variables; the front end never sees it. The front end has zero runtime dependencies."
+    },
+    {
+      "id": "firstsource-solutions-data-analyst-intern-1",
+      "title": "Firstsource Solutions: Data Analyst Intern",
+      "text": "Dates: May 2024 to December 2024, remote, India. Abhigna developed Python scripts automating recurring data-processing workflows for a cross-functional team of analysts and machine learning engineers, cutting manual effort and improving the reliability of scheduled jobs. She led code reviews using GitHub pull requests with specific, actionable feedback aligned with team SDLC standards, and authored technical documentation that improved code consistency and shortened review cycles."
+    },
+    {
+      "id": "savart-software-development-engineer-sde-intern-1",
+      "title": "Savart: Software Development Engineer (SDE) Intern",
+      "text": "Dates: June 2023 to November 2023, Hyderabad, India. Abhigna built a complete internal research web page from scratch (layout, components, styling, form handling, and client-side state) with JavaScript, HTML, and CSS, which let researchers submit queries without external tools. She built RESTful APIs with TypeScript and Node.js, integrated the page with backend MySQL services, and delivered features on schedule in Agile sprints with sprint planning and daily standups on a distributed team."
+    },
+    {
+      "id": "skolar-software-engineering-intern-1",
+      "title": "Skolar: Software Engineering Intern",
+      "text": "Dates: October 2022 to December 2022, remote, India. Abhigna implemented core data structures (arrays, linked lists, stacks, queues, hash tables, trees, heaps, graphs) and their algorithms in Python on Linux and integrated them into the project codebase. She developed and documented TypeScript code, wrote unit tests, followed SDLC guidelines, used Docker containers, and took part in code reviews."
+    },
+    {
+      "id": "skills-1",
+      "title": "Skills",
+      "text": "Languages: Python, Java, C++, TypeScript, JavaScript, SQL, HTML, CSS.\nFrameworks: React, Node.js, Express.js, FastAPI, Flask.\nBackend and APIs: REST API design, microservices, JWT authentication, role-based access control, schema validation.\nCloud and DevOps: AWS (EC2, ECS Fargate, Lambda, S3, RDS, Step Functions, EventBridge, ECR, IAM), Docker, Kubernetes (ingress, autoscaling, cert-manager), GitHub Actions, CI/CD, Linux, Git.\nDatabases and data: MySQL, PostgreSQL, MongoDB, schema design, Pandas, NumPy, Scikit-Learn, LightGBM, PyTorch, TensorFlow.\nAI tooling: Anthropic Claude API, retrieval-augmented generation, Claude Code for AI-assisted development.\nTesting and practices: Pytest, Vitest, code review, technical documentation, Agile/Scrum, SDLC, object-oriented design. She has solved 250+ LeetCode problems."
+    },
+    {
+      "id": "earlier-machine-learning-projects-1",
+      "title": "Earlier machine learning projects",
+      "text": "Heart Stroke Risk Assessment (Python, Scikit-Learn, Pandas): compared supervised and unsupervised models for healthcare risk prediction using modular, object-oriented training and evaluation code. Stock Price Prediction Engine (Python, TensorFlow): LSTM time-series forecasting with hyperparameter tuning. Real-Time License Plate Recognition (Python, PaddleOCR, OWLv2 vision transformer): real-time vehicle identification combining detection and OCR. Three-layer neural network from scratch in NumPy on CIFAR-10 with full backpropagation, reaching 77.5% test accuracy at 1,000 training steps."
+    },
+    {
+      "id": "certifications-and-achievements-1",
+      "title": "Certifications and achievements",
+      "text": "AWS Training and Certification; Full Stack Web Development (Edu-Versity); React - The Complete Guide (Udemy); HackerRank Problem Solving certification; 250+ LeetCode problems solved; University Ambassador for the 11th International Conference on Frontiers of Intelligent Computing (Springer)."
+    },
+    {
+      "id": "how-to-reach-abhigna-or-hire-her-1",
+      "title": "How to reach Abhigna or hire her",
+      "text": "The best way to reach Abhigna is email at k.abhigna2@gmail.com or LinkedIn at linkedin.com/in/abhignakandala. Her code is at github.com/KandalaAbhigna. She is available for interviews with reasonable notice and is graduating in December 2026, so she can start full-time roles in early 2027."
+    }
+  ]
+}
