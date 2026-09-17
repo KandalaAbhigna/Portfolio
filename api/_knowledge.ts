@@ -2,7 +2,7 @@
 import type { Chunk } from "./_retrieval.js";
 
 const knowledge: { builtAt: string; chunks: Chunk[] } = {
-  "builtAt": "2026-09-16T20:01:58.424Z",
+  "builtAt": "2026-09-17T02:57:36.080Z",
   "chunks": [
     {
       "id": "about-abhigna-kandala-1",
@@ -20,23 +20,23 @@ const knowledge: { builtAt: string; chunks: Chunk[] } = {
       "text": "This assistant does not discuss visa status, employment authorization, sponsorship, salary expectations, age, or other personal matters. For those topics, contact Abhigna directly by email at k.abhigna2@gmail.com."
     },
     {
-      "id": "siddhantha-t20-cloud-native-stock-prediction-platform-1",
-      "title": "Siddhantha T20: cloud-native stock prediction platform",
-      "text": "Dates: January 2026 to June 2026. Stack: Python, Flask, React, TypeScript, LightGBM, AWS (ECS Fargate, Step Functions, EventBridge, Lambda, S3, RDS MySQL, ECR, IAM).\n\nAbhigna co-built T20 as one of two engineers reporting to the tech lead. T20 scores about 4,500 tickers across five market universes (Russell 2000, Russell 1000, S&P 500, S&P 600, plus indexes and sector ETFs) with LightGBM models and serves daily Top-20 stock picks to a live web dashboard."
+      "id": "t20-predictor-cloud-native-stock-prediction-platform-1",
+      "title": "T20 Predictor: cloud-native stock prediction platform",
+      "text": "Dates: January 2026 to June 2026. Stack: Python, Flask, React, TypeScript, LightGBM, AWS (ECS Fargate, Step Functions, EventBridge, Lambda, S3, RDS MySQL, ECR, IAM).\n\nAbhigna co-built T20 Predictor as one of two engineers reporting to the tech lead. T20 Predictor scores about 4,500 tickers across five market universes (Russell 2000, Russell 1000, S&P 500, S&P 600, plus indexes and sector ETFs) with LightGBM models and serves daily Top-20 stock picks to a live web dashboard."
     },
     {
-      "id": "siddhantha-t20-cloud-native-stock-prediction-platform-2",
-      "title": "Siddhantha T20: cloud-native stock prediction platform",
+      "id": "t20-predictor-cloud-native-stock-prediction-platform-2",
+      "title": "T20 Predictor: cloud-native stock prediction platform",
       "text": "She automated the end-to-end pipeline (data download, dataset build, feature engineering, prediction, statistics) as containerized ECS Fargate tasks orchestrated by AWS Step Functions and scheduled with EventBridge, replacing manual daily runs. She developed the Flask REST API over Amazon S3 datasets and RDS MySQL, served through AWS Lambda using a pre-compute pattern (the pipeline writes small JSON and CSV artifacts that Lambda reads, because Lambda cannot load large parquet files cheaply), and the React/TypeScript dashboard it powers, with fault-tolerant error handling and optimized data fetching. She integrated the Alpha Vantage market data API under its rate limit."
     },
     {
-      "id": "siddhantha-t20-cloud-native-stock-prediction-platform-3",
-      "title": "Siddhantha T20: cloud-native stock prediction platform",
+      "id": "t20-predictor-cloud-native-stock-prediction-platform-3",
+      "title": "T20 Predictor: cloud-native stock prediction platform",
       "text": "She extended coverage from three to five universes and added the Russell 1000 (135,000+ feature rows across 451 tickers), fixing two latent production bugs along the way (a NaN ticker sort error and a multiprocessing pickle error caused by a nested function). She also found and fixed a silent failure-reporting defect: Step Functions reported SUCCEEDED even when a step failed, because the failure branch ended with End: true instead of a Fail state.\n\nShe backtested a proposed swing-trading strategy and delivered a clear no-go recommendation (profit factor 0.84, 32.7% win rate) that the tech lead adopted, which stopped further build-out before more engineering time was spent."
     },
     {
-      "id": "siddhantha-t20-cloud-native-stock-prediction-platform-4",
-      "title": "Siddhantha T20: cloud-native stock prediction platform",
+      "id": "t20-predictor-cloud-native-stock-prediction-platform-4",
+      "title": "T20 Predictor: cloud-native stock prediction platform",
       "text": "She supervised and code-reviewed four software interns building a React-Admin frontend and a backend REST API, producing a prioritized 10-item review and a strict-TypeScript reference implementation with handover documentation."
     },
     {
@@ -50,14 +50,14 @@ const knowledge: { builtAt: string; chunks: Chunk[] } = {
       "text": "Stack: React.js, Node.js, Express.js, MongoDB, REST APIs, AWS EC2, Nginx (MERN stack).\n\nA full-stack app for creating and sharing multimedia time capsules (photos, text, music) with friend requests, capsule access requests, contributor permissions, and public/private privacy controls. The backend has 25+ RESTful endpoints for authentication, capsule CRUD, friends, access control, and media storage, with JSON schema validation across five MongoDB collections (users, capsules, photos, text, music). The React front end has 8 pages (Welcome, Registration, MyCapsules, CurrentCapsule, Friends, Search, Profile, Settings) with reusable components and dynamic state management. It is deployed to production on AWS EC2 behind Nginx as a reverse proxy."
     },
     {
-      "id": "ai-concierge-the-retrieval-augmented-assistant-on-this-portfolio-1",
-      "title": "AI Concierge: the retrieval-augmented assistant on this portfolio",
-      "text": "Stack: TypeScript, Vercel Functions (Node.js), Anthropic Claude API, custom BM25 retrieval, server-sent events (SSE) streaming."
+      "id": "ask-abhigna-ai-the-retrieval-augmented-assistant-on-this-portfolio-1",
+      "title": "Ask Abhigna AI: the retrieval-augmented assistant on this portfolio",
+      "text": "Stack: TypeScript, Vercel Functions (Node.js), custom BM25 retrieval, extractive answer composition, optional local LLM through Ollama, server-sent events (SSE) streaming."
     },
     {
-      "id": "ai-concierge-the-retrieval-augmented-assistant-on-this-portfolio-2",
-      "title": "AI Concierge: the retrieval-augmented assistant on this portfolio",
-      "text": "The concierge on abhigna's portfolio is a retrieval-augmented generation (RAG) assistant. Her background is written as a markdown knowledge base, split into sections at build time, and indexed with a BM25 ranking function implemented from scratch in TypeScript (no vector database). At request time the server tokenizes the visitor's question, scores every chunk, sends the top-ranked chunks to Claude as context with a system prompt that forbids inventing facts, and streams the answer back to the browser over server-sent events. The retrieved sections are shown to the visitor as citations, so the retrieval step is visible rather than hidden. The API key lives only in Vercel's environment variables; the front end never sees it. The front end has zero runtime dependencies."
+      "id": "ask-abhigna-ai-the-retrieval-augmented-assistant-on-this-portfolio-2",
+      "title": "Ask Abhigna AI: the retrieval-augmented assistant on this portfolio",
+      "text": "The assistant on Abhigna's portfolio is a retrieval-augmented system that runs without any paid API key. Her background is written as a markdown knowledge base, split into sections at build time, and indexed with a BM25 ranking function implemented from scratch in TypeScript (no vector database). At request time the server tokenizes the visitor's question and scores every section. In the deployed site, the answer is composed extractively: the server ranks individual sentences from the top sections against the question and returns the most relevant ones, so every sentence in the answer is quoted from the knowledge base and cannot be invented. When Abhigna runs the site locally with Ollama installed, the same retrieved sections can instead be passed to a local open-weight model that writes a fluent answer under a strict no-invention prompt. Either way, the retrieved sections are shown to the visitor as citations, and the assistant says so when the material does not cover a question. The front end has zero runtime dependencies."
     },
     {
       "id": "firstsource-solutions-data-analyst-intern-1",

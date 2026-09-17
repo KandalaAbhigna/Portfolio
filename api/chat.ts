@@ -1,16 +1,18 @@
 // POST /api/chat
-// Retrieval-augmented concierge: BM25 over Abhigna's knowledge base -> Claude -> SSE stream.
-// The Anthropic key is read from the ANTHROPIC_API_KEY environment variable on Vercel.
+// Ask Abhigna AI: BM25 retrieval over the knowledge base, then an answer that needs no API key.
+//   - Deployed (default): extractive answer quoted from the retrieved sections.
+//   - Local with Ollama:   set OLLAMA_URL (e.g. http://localhost:11434) to use a local model.
+// Named POST export = Vercel's Web-standard handler signature (Request in, Response out).
 import knowledge from "./_knowledge.js";
 import { retrieve } from "./_retrieval.js";
+import { composeExtractive, isPersonal, MIN_TOP_SCORE, streamOllama } from "./_answer.js";
 
-export const config = { runtime: "nodejs" };
+export const maxDuration = 30;
 
-const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-5";
 const MAX_TURNS = 8;
 const MAX_MESSAGE_CHARS = 600;
 const RATE_WINDOW_MS = 10 * 60 * 1000;
-const RATE_MAX = 20;
+const RATE_MAX = 30;
 
 interface Turn {
   role: "user" | "assistant";
@@ -27,34 +29,19 @@ function rateLimited(ip: string): boolean {
   return hits.length > RATE_MAX;
 }
 
-function sse(obj: unknown): string {
-  return `data: ${JSON.stringify(obj)}\n\n`;
-}
+const sse = (obj: unknown): string => `data: ${JSON.stringify(obj)}\n\n`;
 
 function json(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
+  return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 }
 
-const SYSTEM_PROMPT = `You are the AI concierge on Abhigna Kandala's portfolio website. You answer questions from recruiters, hiring managers, and engineers about Abhigna's background, projects, skills, and experience.
+export async function GET(): Promise<Response> {
+  const mode = process.env.OLLAMA_URL ? `ollama:${process.env.OLLAMA_MODEL ?? "llama3.2"}` : "extractive";
+  return json(200, { ok: true, mode, sections: knowledge.chunks.length, builtAt: knowledge.builtAt });
+}
 
-Rules:
-- Answer ONLY from the CONTEXT sections provided. If the context does not contain the answer, say you do not have that detail and suggest emailing Abhigna at k.abhigna2@gmail.com. Never invent employers, dates, metrics, or technologies.
-- Do not answer questions about work authorization, visa status, salary, age, or other personal matters; direct those to Abhigna by email.
-- Refer to Abhigna as "Abhigna" or "she". You are not Abhigna; do not speak in the first person as her.
-- Be concise: two to five sentences, or a short list when comparing several things. Plain language, no hype, no exclamation marks.
-- If the visitor asks something unrelated to Abhigna or hiring her, politely steer back.
-- When useful, end with one short follow-up question the visitor might want to ask next.`;
-
-export default async function handler(req: Request): Promise<Response> {
-  if (req.method !== "POST") return json(405, { error: "Method not allowed" });
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return json(503, { error: "Concierge is not configured (missing API key)." });
-
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+export async function POST(req: Request): Promise<Response> {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
   if (rateLimited(ip)) return json(429, { error: "Too many requests. Please try again in a few minutes." });
 
   let body: { messages?: Turn[] };
@@ -73,83 +60,50 @@ export default async function handler(req: Request): Promise<Response> {
   if (!last || last.role !== "user" || !last.content.trim()) {
     return json(400, { error: "The last message must be from the user." });
   }
+  const question = last.content.trim();
 
-  // Retrieval: use the latest question plus the previous user turn for context.
+  // Short follow-ups ("what about testing?") borrow context from the previous question.
   const prevUser = [...messages].reverse().find((m, i) => i > 0 && m.role === "user");
-  const query = prevUser ? `${last.content} ${prevUser.content}` : last.content;
+  const query = prevUser && question.split(/\s+/).length < 6 ? `${question} ${prevUser.content}` : question;
   const hits = retrieve(knowledge.chunks, query, 5);
-  const context = hits.map((h) => `## ${h.title}\n${h.text}`).join("\n\n");
+  const grounded = hits.length > 0 && hits[0].score >= MIN_TOP_SCORE && !isPersonal(question);
 
-  const userTurn = `CONTEXT:\n${context || "(no matching sections)"}\n\nQUESTION: ${last.content}`;
-  const anthropicMessages = [
-    ...messages.slice(0, -1),
-    { role: "user" as const, content: userTurn },
-  ];
-
-  const upstream = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 500,
-      temperature: 0.2,
-      system: SYSTEM_PROMPT,
-      messages: anthropicMessages,
-      stream: true,
-    }),
-  });
-
-  if (!upstream.ok || !upstream.body) {
-    const detail = await upstream.text().catch(() => "");
-    console.error("anthropic error", upstream.status, detail.slice(0, 300));
-    return json(502, { error: "The concierge could not reach its model. Please try again." });
-  }
-
+  const ollamaUrl = process.env.OLLAMA_URL;
+  const ollamaModel = process.env.OLLAMA_MODEL ?? "llama3.2";
   const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-  const reader = upstream.body.getReader();
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      controller.enqueue(
-        encoder.encode(
-          sse({
-            type: "sources",
-            sources: hits.map((h) => ({ id: h.id, title: h.title, score: Number(h.score.toFixed(2)) })),
-          }),
-        ),
-      );
-      let buffer = "";
+      const send = (obj: unknown) => controller.enqueue(encoder.encode(sse(obj)));
+      let mode = "extractive";
       try {
-        for (;;) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const events = buffer.split("\n\n");
-          buffer = events.pop() ?? "";
-          for (const evt of events) {
-            const line = evt.split("\n").find((l) => l.startsWith("data:"));
-            if (!line) continue;
-            try {
-              const payload = JSON.parse(line.slice(5).trim());
-              if (payload.type === "content_block_delta" && payload.delta?.type === "text_delta") {
-                controller.enqueue(encoder.encode(sse({ type: "text", text: payload.delta.text })));
-              } else if (payload.type === "error") {
-                controller.enqueue(encoder.encode(sse({ type: "error", error: "Model error" })));
-              }
-            } catch {
-              /* ignore malformed event */
-            }
+        if (ollamaUrl && grounded) {
+          try {
+            mode = `ollama:${ollamaModel}`;
+            const context = hits.filter((h) => !h.title.startsWith("Visa, salary") && h.score >= hits[0].score * 0.5);
+            const firstPiece = streamOllama(ollamaUrl, ollamaModel, question, context);
+            const first = await firstPiece.next(); // fail fast (and fall back) before sending anything
+            send({ type: "meta", mode, sources: context.filter((h, i, all) => all.findIndex((x) => x.title === h.title) === i).map((h) => ({ id: h.id, title: h.title, score: Number(h.score.toFixed(2)) })) });
+            if (!first.done) send({ type: "text", text: first.value });
+            for await (const piece of firstPiece) send({ type: "text", text: piece });
+            send({ type: "done" });
+            return;
+          } catch (err) {
+            console.warn(`Ollama unavailable at ${ollamaUrl} (${err instanceof Error ? err.message : err}); using extractive mode.`);
+            mode = "extractive";
           }
         }
-        controller.enqueue(encoder.encode(sse({ type: "done" })));
+
+        const { text: answer, titles } = composeExtractive(question, hits);
+        const cited = hits.filter((h, i, all) => titles.includes(h.title) && all.findIndex((x) => x.title === h.title) === i);
+        send({ type: "meta", mode, sources: cited.map((h) => ({ id: h.id, title: h.title, score: Number(h.score.toFixed(2)) })) });
+        // Emit in word groups so the client renders progressively, same as a model stream.
+        const words = answer.split(/(?<= )/);
+        for (let i = 0; i < words.length; i += 6) send({ type: "text", text: words.slice(i, i + 6).join("") });
+        send({ type: "done" });
       } catch (err) {
-        console.error("stream error", err);
-        controller.enqueue(encoder.encode(sse({ type: "error", error: "Stream interrupted" })));
+        console.error("chat error", err);
+        send({ type: "error", error: "Something went wrong. Please try again." });
       } finally {
         controller.close();
       }
@@ -161,7 +115,6 @@ export default async function handler(req: Request): Promise<Response> {
     headers: {
       "content-type": "text/event-stream; charset=utf-8",
       "cache-control": "no-cache, no-transform",
-      connection: "keep-alive",
       "x-accel-buffering": "no",
     },
   });

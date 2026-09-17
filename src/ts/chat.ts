@@ -12,9 +12,42 @@ interface Source {
 }
 
 const WELCOME =
-  "Hi. I answer questions about Abhigna's projects, skills, and experience using only her knowledge base, and I show which sections I used. What would you like to know?";
+  "Hi. I answer questions about Abhigna's projects, skills, and experience using only an approved knowledge base, and I cite the sections I used. If the material does not cover something, I will say so. What would you like to know?";
+
+const MARKUP = `
+<button class="chat-fab" type="button" data-open-chat aria-label="Open Ask Abhigna AI">
+  <span class="chat-fab-pulse" aria-hidden="true"></span>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg>
+</button>
+<div class="chat-backdrop" data-close-chat hidden></div>
+<aside class="chat" id="chat" role="dialog" aria-modal="true" aria-labelledby="chat-title" hidden>
+  <header class="chat-head">
+    <div>
+      <p id="chat-title" class="chat-title">Ask Abhigna AI</p>
+      <p class="chat-sub">Retrieval-augmented · no paid AI API · answers only from the approved knowledge base</p>
+    </div>
+    <button class="icon-btn" type="button" data-close-chat aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </header>
+  <div class="chat-log" id="chat-log" aria-live="polite" aria-busy="false"></div>
+  <div class="chat-suggest" id="chat-suggest"></div>
+  <form class="chat-form" id="chat-form">
+    <label class="sr-only" for="chat-input">Your question</label>
+    <textarea id="chat-input" rows="1" maxlength="600" placeholder="Ask about her AWS work, testing, or what she owned on T20…" required></textarea>
+    <button class="btn btn-accent" type="submit" id="chat-send" aria-label="Send">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </form>
+  <p class="chat-foot">Answers come only from Abhigna's knowledge base. Confirm anything important with her directly.</p>
+</aside>`;
 
 export function initChat(): void {
+  if (!document.getElementById("chat")) {
+    const host = document.createElement("div");
+    host.innerHTML = MARKUP;
+    document.body.append(...Array.from(host.children));
+  }
   const panelEl = document.getElementById("chat") as HTMLElement | null;
   const backdropEl = document.querySelector<HTMLElement>(".chat-backdrop");
   const logEl = document.getElementById("chat-log") as HTMLElement | null;
@@ -44,13 +77,13 @@ export function initChat(): void {
     return div;
   };
 
-  const addSources = (sources: Source[]): void => {
+  const addSources = (sources: Source[], mode: string): void => {
     if (sources.length === 0) return;
     const wrap = document.createElement("div");
     wrap.className = "msg-sources";
     const lbl = document.createElement("span");
     lbl.className = "lbl";
-    lbl.textContent = "retrieved:";
+    lbl.textContent = mode.startsWith("ollama") ? `local model (${mode.slice(7)}) · sources:` : "quoted from:";
     wrap.append(lbl);
     const seen = new Set<string>();
     for (const s of sources) {
@@ -146,6 +179,7 @@ export function initChat(): void {
 
     let answer = "";
     let sources: Source[] = [];
+    let mode = "extractive";
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -169,11 +203,11 @@ export function initChat(): void {
           const line = evt.split("\n").find((l) => l.startsWith("data:"));
           if (!line) continue;
           const payload = JSON.parse(line.slice(5).trim()) as
-            | { type: "sources"; sources: Source[] }
+            | { type: "meta"; mode: string; sources: Source[] }
             | { type: "text"; text: string }
             | { type: "error"; error: string }
             | { type: "done" };
-          if (payload.type === "sources") sources = payload.sources;
+          if (payload.type === "meta") { sources = payload.sources; mode = payload.mode; }
           else if (payload.type === "text") {
             if (!answer) bot.textContent = "";
             answer += payload.text;
@@ -184,7 +218,7 @@ export function initChat(): void {
       }
       if (!answer) throw new Error("No answer was returned.");
       history.push({ role: "assistant", content: answer });
-      addSources(sources);
+      addSources(sources, mode);
     } catch (err) {
       bot.classList.add("is-error");
       bot.textContent = err instanceof Error ? err.message : "Something went wrong.";

@@ -1,57 +1,78 @@
 # Abhigna Kandala — Portfolio
 
-Personal site with a retrieval-augmented AI concierge. Live at the Vercel deployment for this repo.
+Live: https://abhigna-kandala.vercel.app
 
-## What is in here
+A zero-dependency TypeScript site with engineering case studies, a system-design lab, and **Ask Abhigna AI**, a retrieval-augmented assistant that runs **without any paid AI API key**.
 
-| Path | What it does |
-| --- | --- |
-| `public/` | The static site: `index.html`, `css/site.css`, `assets/`. Compiled JS lands in `public/js/` (git-ignored). |
-| `src/ts/` | Front-end TypeScript. `data.ts` holds all content (projects, AI apps, jobs, skills). `render.ts` builds the DOM. `chat.ts` is the concierge client. `hero.ts` is the background canvas. |
-| `src/data/knowledge.md` | The concierge's knowledge base. Plain markdown; every `# Heading` becomes a retrievable chunk. |
-| `scripts/build-knowledge.mjs` | Splits `knowledge.md` into `api/_knowledge.ts` at build time. |
-| `api/chat.ts` | Vercel Function. BM25 retrieval over the chunks → Anthropic Messages API → server-sent events back to the browser. |
-| `api/_retrieval.ts` | BM25 ranking written from scratch, with a small synonym map and stop-word list. |
-| `legacy/` | The previous single-file site, kept for reference. |
+## Run it locally
 
-No runtime dependencies. The only dev dependency is TypeScript.
-
-## How the concierge works
-
-1. `npm run build` chunks `knowledge.md` and compiles the TypeScript.
-2. A visitor asks a question. The browser POSTs the last 8 turns to `/api/chat`.
-3. The function tokenizes the question (plus the previous user turn for context), scores every chunk with BM25, and keeps the top 5.
-4. Those chunks go to Claude as `CONTEXT`, with a system prompt that forbids answering outside the context and refuses personal or salary questions.
-5. The answer streams back as SSE. The retrieved section titles are sent first so the UI can show them as citations.
-
-Guardrails: 600-character message cap, 8-turn history cap, 20 requests per IP per 10 minutes (in-memory, per function instance), `temperature: 0.2`, `max_tokens: 500`.
-
-## Local development
+Requirements: Node.js 20 or newer.
 
 ```bash
+git clone https://github.com/KandalaAbhigna/Portfolio.git
+cd Portfolio
 npm install
-npm run build        # builds knowledge index + compiles src/ts -> public/js
-npx serve public     # static preview; /api/chat needs Vercel
+npm run dev
 ```
 
-To run the API locally, use `vercel dev` with `ANTHROPIC_API_KEY` in `.env.local`.
+Open http://localhost:5173. The assistant works immediately in **extractive mode** (no model, no key): it retrieves the best-matching sections of the knowledge base and answers with the most relevant sentences, quoted verbatim, with citations.
 
-## Deploying on Vercel
+### Optional: a local AI model with Ollama
 
-1. Import this repo in Vercel. Framework preset: **Other**. Build command and output directory are already set in `vercel.json`.
-2. In Project Settings → Environment Variables add:
-   - `ANTHROPIC_API_KEY` — required.
-   - `ANTHROPIC_MODEL` — optional, defaults to `claude-sonnet-4-5`.
-3. Deploy. The function lives at `/api/chat`.
+If you want fluent, model-written answers on your own machine, still free and fully offline:
+
+```bash
+# 1. Install Ollama from https://ollama.com, then pull a small model
+ollama pull llama3.2
+
+# 2. Start the site pointed at your local Ollama
+OLLAMA_URL=http://localhost:11434 npm run dev
+
+# Optional: pick a different model
+OLLAMA_URL=http://localhost:11434 OLLAMA_MODEL=qwen2.5:3b npm run dev
+```
+
+The model only sees the retrieved sections and is instructed not to invent anything. If Ollama is not running, the assistant falls back to extractive mode automatically.
+
+The deployed site on Vercel always uses extractive mode. A cloud function cannot reach a model running on your laptop, and that keeps hosting free.
+
+## How the assistant works
+
+1. `src/data/knowledge.md` is the only source of truth. Every `# Heading` becomes a retrievable section; long sections are split at paragraph breaks.
+2. `npm run build` chunks it into `api/_knowledge.ts`.
+3. A question hits `POST /api/chat`. `api/_retrieval.ts` ranks sections with BM25 (written from scratch, with a small synonym map).
+4. `api/_answer.ts` either composes an extractive answer from the top sections, or streams one from Ollama when `OLLAMA_URL` is set.
+5. The answer streams back over server-sent events, with the cited sections listed first.
+
+Guardrails: personal topics (visa, salary, age) are refused with a pointer to email; weak retrieval returns an honest "not covered" message; messages are capped at 600 characters; 30 requests per IP per 10 minutes.
+
+Check answer quality after editing the knowledge base:
+
+```bash
+npm run test:answers
+npm run test:answers -- "Does she know Kubernetes?"
+```
+
+## Project layout
+
+| Path | Purpose |
+| --- | --- |
+| `public/` | Static site: `index.html`, `css/`, `assets/` (resume PDF, favicon). Build output goes to `public/js/`, `public/case-studies/`, and `public/lab.html`. |
+| `src/ts/` | Front end. `data.ts` holds featured work, engineering depth, and experience. `render.ts` builds the DOM. `chat.ts` is the assistant UI. |
+| `scripts/pages/` | Case study and lab page content, rendered to HTML by `scripts/build-pages.mjs`. |
+| `src/data/knowledge.md` | The assistant's knowledge base. |
+| `api/chat.ts` | Vercel Function (`GET` for status, `POST` for answers). |
+| `api/_retrieval.ts`, `api/_answer.ts` | BM25 retrieval; extractive and Ollama answer composition. |
+| `scripts/dev-server.mjs` | Local server that runs the same API handler as Vercel. |
+| `legacy/` | The previous single-file site. |
+
+## Deploy
+
+Vercel imports this repo with the **Other** preset; `vercel.json` sets the build command and output directory. **No environment variables are required.** Every push to `main` redeploys.
 
 ## Updating content
 
-- **Projects, AI apps, experience, skills:** edit `src/ts/data.ts`. A project with no `href` renders as a disabled pill rather than a broken link.
-- **What the concierge knows:** edit `src/data/knowledge.md`. Keep one topic per `# Heading`; the chunker splits long sections at paragraph breaks around 900 characters.
-- **Resume PDF:** replace `public/assets/Abhigna_Kandala_Resume.pdf`.
-
-## Checks
-
-```bash
-npm run check   # typechecks the front end and the API
-```
+- **Projects, depth areas, experience:** `src/ts/data.ts`
+- **Case studies and lab:** `scripts/pages/*.mjs`
+- **What the assistant knows:** `src/data/knowledge.md`, then `npm run test:answers`
+- **Resume:** replace `public/assets/Abhigna_Kandala_Resume.pdf`

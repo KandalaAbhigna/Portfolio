@@ -38,11 +38,17 @@ const SYNONYMS: Record<string, string[]> = {
   manage: ["supervised"],
   rag: ["retrieval", "concierge", "assistant"],
   concierge: ["retrieval", "assistant", "rag", "portfolio"],
+  assistant: ["retrieval", "rag", "portfolio"],
+  bug: ["bugs", "fixed", "failure", "defect"],
+  hardest: ["bug", "failure", "fixed"],
+  owned: ["built", "developed", "automated"],
+  own: ["built", "developed", "automated"],
   chatbot: ["concierge", "assistant", "rag"],
-  ai: ["claude", "llm", "concierge", "machine", "learning"],
+  ai: ["llm", "assistant", "retrieval", "machine", "learning"],
   ml: ["machine", "learning", "lightgbm", "model"],
-  stock: ["t20", "siddhantha", "ticker"],
-  t20: ["siddhantha", "stock"],
+  stock: ["t20", "predictor", "ticker"],
+  t20: ["predictor", "stock"],
+  predictor: ["t20", "stock"],
   kubernetes: ["k8s", "terrapin"],
   k8s: ["kubernetes"],
   react: ["frontend", "front", "typescript"],
@@ -62,7 +68,7 @@ const SYNONYMS: Record<string, string[]> = {
   graduation: ["december", "2026"],
 };
 
-export function tokenize(text: string): string[] {
+export function tokenize(text: string, expand = true): string[] {
   const raw = text
     .toLowerCase()
     .replace(/[^a-z0-9.+#\s-]/g, " ")
@@ -72,7 +78,7 @@ export function tokenize(text: string): string[] {
   const out: string[] = [];
   for (const t of raw) {
     out.push(t);
-    const syn = SYNONYMS[t];
+    const syn = expand ? SYNONYMS[t] : undefined;
     if (syn) out.push(...syn);
   }
   return out;

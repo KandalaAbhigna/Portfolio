@@ -1,4 +1,4 @@
-import { renderAi, renderProjects, renderSkills, renderTimeline } from "./render.js";
+import { renderDepth, renderFeatured, renderTimeline } from "./render.js";
 import { initChat } from "./chat.js";
 import { initHero } from "./hero.js";
 
@@ -62,14 +62,12 @@ function initReveal(): void {
 }
 
 function main(): void {
-  const ai = byId("ai-grid");
-  const pl = byId("project-list");
-  const tl = byId("timeline");
-  const sk = byId("skills-grid");
-  if (ai) renderAi(ai);
-  if (pl) renderProjects(pl);
-  if (tl) renderTimeline(tl);
-  if (sk) renderSkills(sk);
+  const f = byId("featured-list");
+  const d = byId("depth-grid");
+  const t = byId("timeline");
+  if (f) renderFeatured(f);
+  if (d) renderDepth(d);
+  if (t) renderTimeline(t);
 
   initTheme();
   initNav();

@@ -1,6 +1,6 @@
-import { aiApps, jobs, projects, skillGroups, type AiApp, type Link } from "./data.js";
+import { depth, featured, jobs, type Featured, type Link } from "./data.js";
 
-function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string): HTMLElementTagNameMap[K] {
+export function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
   if (cls) node.className = cls;
   if (text !== undefined) node.textContent = text;
@@ -9,7 +9,11 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: 
 
 function linkPill(link: Link, cls = ""): HTMLAnchorElement {
   const a = el("a", cls, link.label);
-  if (link.href) {
+  if (link.href === "#chat-open") {
+    a.setAttribute("role", "button");
+    a.tabIndex = 0;
+    a.dataset.openChat = "true";
+  } else if (link.href) {
     a.href = link.href;
     if (link.href.startsWith("http")) {
       a.target = "_blank";
@@ -17,12 +21,12 @@ function linkPill(link: Link, cls = ""): HTMLAnchorElement {
     }
   } else {
     a.setAttribute("aria-disabled", "true");
-    a.title = "Link not public";
+    a.title = "Not public";
   }
   return a;
 }
 
-function diagram(kind: AiApp["diagram"]): SVGSVGElement {
+export function diagram(kind: Featured["diagram"]): SVGSVGElement {
   const ns = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(ns, "svg");
   svg.setAttribute("viewBox", "0 0 360 220");
@@ -48,18 +52,8 @@ function diagram(kind: AiApp["diagram"]): SVGSVGElement {
     svg.append(p);
   };
 
-  if (kind === "rag") {
-    svg.setAttribute("aria-label", "Question goes to BM25 retrieval over the knowledge base, top chunks and the question go to Claude, and the answer streams back with citations.");
-    node(12, 12, 120, "Visitor question", "browser", "");
-    node(228, 12, 120, "Knowledge base", "md → chunks", "");
-    node(120, 88, 120, "BM25 retrieval", "top-5 sections", "hot");
-    node(120, 164, 120, "Claude", "grounded answer", "acc");
-    edge("M132 34 C 170 34, 150 88, 150 88");
-    edge("M288 56 C 288 80, 240 88, 240 100");
-    edge("M180 132 L180 164");
-    edge("M120 186 C 60 186, 40 60, 40 56");
-  } else if (kind === "pipeline") {
-    svg.setAttribute("aria-label", "EventBridge schedule triggers Step Functions, which runs five ECS Fargate tasks in order and writes results to S3 and RDS for Lambda to serve.");
+  if (kind === "pipeline") {
+    svg.setAttribute("aria-label", "EventBridge schedule triggers Step Functions, which runs five ECS Fargate tasks and writes results to S3 and RDS; a Lambda API reads precomputed JSON for the React dashboard.");
     node(12, 12, 104, "EventBridge", "daily cron", "");
     node(136, 12, 104, "Step Functions", "orchestrates", "hot");
     node(260, 12, 88, "ECS Fargate", "5 tasks", "hot");
@@ -71,88 +65,82 @@ function diagram(kind: AiApp["diagram"]): SVGSVGElement {
     edge("M304 56 C 304 88, 64 66, 64 100");
     edge("M116 122 L136 122");
     edge("M240 122 L260 122");
+  } else if (kind === "k8s") {
+    svg.setAttribute("aria-label", "GitHub Actions builds Docker images and deploys to Kubernetes; Nginx ingress with cert-manager TLS routes to autoscaled FastAPI pods backed by MongoDB.");
+    node(12, 12, 104, "GitHub Actions", "on push", "");
+    node(136, 12, 104, "Docker", "build + push", "");
+    node(260, 12, 88, "Kubernetes", "deploy", "hot");
+    node(12, 100, 104, "Nginx ingress", "TLS, secrets", "hot");
+    node(136, 100, 104, "FastAPI pods", "2–10 replicas", "acc");
+    node(260, 100, 88, "MongoDB", "state", "");
+    edge("M116 34 L136 34");
+    edge("M240 34 L260 34");
+    edge("M304 56 C 304 88, 64 66, 64 100");
+    edge("M116 122 L136 122");
+    edge("M240 122 L260 122");
   } else {
-    svg.setAttribute("aria-label", "Input, model, output.");
-    node(12, 88, 100, "Input", "", "");
-    node(130, 88, 100, "Model", "", "hot");
-    node(248, 88, 100, "Output", "", "acc");
-    edge("M112 110 L130 110");
-    edge("M230 110 L248 110");
+    svg.setAttribute("aria-label", "Question goes to BM25 retrieval over the knowledge base, the best-matching sentences are quoted from those sections, and the answer streams back with citations.");
+    node(12, 12, 120, "Visitor question", "browser", "");
+    node(228, 12, 120, "Knowledge base", "md → chunks", "");
+    node(120, 88, 120, "BM25 retrieval", "top-5 sections", "hot");
+    node(120, 164, 120, "Answer", "quoted + cited", "acc");
+    edge("M132 34 C 170 34, 150 88, 150 88");
+    edge("M288 56 C 288 80, 240 88, 240 100");
+    edge("M180 132 L180 164");
+    edge("M120 186 C 60 186, 40 60, 40 56");
   }
   return svg;
 }
 
-export function renderAi(root: HTMLElement): void {
+export function renderFeatured(root: HTMLElement): void {
   root.replaceChildren();
-  if (aiApps.length === 0) {
-    root.append(el("div", "ai-empty", "AI applications will appear here."));
-    return;
-  }
-  for (const app of aiApps) {
-    const idx = aiApps.indexOf(app);
-    const compact = app.compact && aiApps.filter((a) => a.compact).length % 2 === 0;
-    const card = el("article", `ai-card reveal${compact ? " is-compact" : ""}${!compact && idx % 2 === 1 ? " is-flipped" : ""}`);
-    card.id = `ai-${app.id}`;
+  featured.forEach((f, idx) => {
+    const card = el("article", `feature reveal${idx % 2 === 1 ? " is-flipped" : ""}`);
+    card.id = `feature-${f.id}`;
 
-    const body = el("div", "ai-card-body");
-    const h3 = el("h3", "ai-card-title");
-    h3.append(el("span", undefined, app.kind), document.createTextNode(app.title));
-    body.append(h3, el("p", "ai-card-desc", app.summary));
+    const body = el("div", "feature-body");
+    body.append(el("p", "card-kicker", f.kind));
+    body.append(el("h3", "feature-title", f.title));
+    body.append(el("p", "feature-story", f.story));
 
-    const ul = el("ul", "ai-card-points");
-    app.points.forEach((p) => ul.append(el("li", undefined, p)));
-    body.append(ul);
+    const metrics = el("dl", "metrics");
+    f.metrics.forEach((m) => {
+      const box = el("div");
+      box.append(el("dd", undefined, m.value), el("dt", undefined, m.label));
+      metrics.append(box);
+    });
+    body.append(metrics);
+
+    const own = el("p", "feature-own");
+    own.append(el("strong", undefined, "My ownership. "), document.createTextNode(f.ownership));
+    body.append(own);
 
     const tags = el("div", "tags");
-    app.stack.forEach((s) => tags.append(el("span", "tag", s)));
+    f.stack.forEach((s) => tags.append(el("span", "tag", s)));
     body.append(tags);
 
-    const actions = el("div", "ai-card-actions");
-    app.links.forEach((l, i) => {
-      const a = linkPill(l, i === 0 ? "btn btn-accent btn-sm" : "btn btn-ghost btn-sm");
-      if (l.href === "#chat-open") {
-        a.removeAttribute("href");
-        a.setAttribute("role", "button");
-        a.tabIndex = 0;
-        a.dataset.openChat = "true";
-      }
-      actions.append(a);
-    });
+    const actions = el("div", "feature-actions");
+    f.links.forEach((l, i) => actions.append(linkPill(l, i === 0 ? "btn btn-accent btn-sm" : "btn btn-ghost btn-sm")));
     body.append(actions);
 
-    const visual = el("div", "ai-card-visual");
-    visual.append(diagram(app.diagram));
+    const visual = el("div", "feature-visual");
+    visual.append(diagram(f.diagram));
 
     card.append(body, visual);
     root.append(card);
-  }
+  });
 }
 
-export function renderProjects(root: HTMLElement): void {
+export function renderDepth(root: HTMLElement): void {
   root.replaceChildren();
-  for (const p of projects) {
-    const art = el("article", "project reveal");
-    art.id = `project-${p.id}`;
-    const meta = el("div", "project-meta");
-    meta.append(el("strong", undefined, p.period), document.createTextNode(p.role));
-
-    const main = el("div");
-    const h3 = el("h3");
-    h3.append(document.createTextNode(p.title + " "), el("span", undefined, "— " + p.subtitle));
-    main.append(h3, el("p", undefined, p.summary));
-    const ul = el("ul", "project-points");
-    p.points.forEach((pt) => ul.append(el("li", undefined, pt)));
-    main.append(ul);
-    const tags = el("div", "tags");
-    p.stack.forEach((s) => tags.append(el("span", "tag", s)));
-    main.append(tags);
-
-    const links = el("div", "project-links");
-    p.links.forEach((l) => links.append(linkPill(l)));
-
-    art.append(meta, main, links);
-    root.append(art);
-  }
+  depth.forEach((d) => {
+    const box = el("article", "depth reveal");
+    box.append(el("h3", undefined, d.name), el("p", "depth-claim", d.claim));
+    const ul = el("ul", "depth-points");
+    d.points.forEach((p) => ul.append(el("li", undefined, p)));
+    box.append(ul);
+    root.append(box);
+  });
 }
 
 export function renderTimeline(root: HTMLElement): void {
@@ -167,17 +155,5 @@ export function renderTimeline(root: HTMLElement): void {
     j.points.forEach((p) => ul.append(el("li", undefined, p)));
     li.append(head, ul);
     root.append(li);
-  }
-}
-
-export function renderSkills(root: HTMLElement): void {
-  root.replaceChildren();
-  for (const g of skillGroups) {
-    const box = el("div", "skill-group reveal");
-    box.append(el("h3", undefined, g.name));
-    const tags = el("div", "tags");
-    g.items.forEach((s) => tags.append(el("span", "tag", s)));
-    box.append(tags);
-    root.append(box);
   }
 }

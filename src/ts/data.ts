@@ -1,33 +1,33 @@
-// Content lives here. Adding a project = adding an object. No fabricated links:
-// a missing `repo`/`live` renders as a disabled pill, never a broken link.
+// All site content lives here. Adding a project = adding an object.
+// Rule: nothing goes in this file that Abhigna cannot defend in an interview.
+// A missing `href` renders as a disabled pill, never a broken link.
 
 export interface Link {
   label: string;
   href?: string;
 }
 
-export interface AiApp {
-  id: string;
-  kind: string; // short category, e.g. "Retrieval-augmented generation"
-  title: string;
-  summary: string;
-  points: string[];
-  stack: string[];
-  links: Link[];
-  diagram: "rag" | "pipeline" | "generic";
-  compact?: boolean;
+export interface Metric {
+  value: string;
+  label: string;
 }
 
-export interface Project {
+export interface Featured {
   id: string;
+  kind: string;
   title: string;
-  subtitle: string;
-  period: string;
-  role: string;
-  summary: string;
-  points: string[];
+  story: string;
+  metrics: Metric[];
+  ownership: string;
   stack: string[];
   links: Link[];
+  diagram: "pipeline" | "k8s" | "rag";
+}
+
+export interface DepthArea {
+  name: string;
+  claim: string;
+  points: string[];
 }
 
 export interface Job {
@@ -38,92 +38,127 @@ export interface Job {
   points: string[];
 }
 
-export const aiApps: AiApp[] = [
+export const featured: Featured[] = [
+  {
+    id: "t20",
+    kind: "Flagship · Cloud, backend, data pipeline, ML inference",
+    title: "T20 Predictor — Cloud-Native Stock Prediction Platform",
+    story:
+      "A production-style stock-intelligence platform that scores about 4,500 equities across five market universes every trading day and publishes Top-20 predictions to a live dashboard.",
+    metrics: [
+      { value: "~4,500", label: "tickers scored daily" },
+      { value: "5", label: "market universes" },
+      { value: "135,000+", label: "feature rows added" },
+      { value: "4", label: "interns supervised" },
+    ],
+    ownership:
+      "One of two engineers, reporting to the tech lead. I owned the pipeline automation, the Flask API and Lambda serving layer, the React/TypeScript dashboard, the Russell 1000 expansion, the swing-strategy backtest, and the intern program.",
+    stack: ["Python", "Flask", "LightGBM", "AWS ECS Fargate", "Step Functions", "EventBridge", "Lambda", "S3", "RDS", "React", "TypeScript"],
+    links: [
+      { label: "Read the case study", href: "/case-studies/t20-predictor.html" },
+      { label: "Scale it to 100k assets", href: "/lab.html" },
+      { label: "Private client repo" },
+    ],
+    diagram: "pipeline",
+  },
+  {
+    id: "terrapin",
+    kind: "API design, auth, testing, CI/CD, Kubernetes",
+    title: "Terrapin Events — Campus Event Management System",
+    story:
+      "Organizers submit events for admin approval, participants register with an automated waitlist, and the system emails confirmations, QR-code tickets, and feedback requests.",
+    metrics: [
+      { value: "27", label: "REST endpoints" },
+      { value: "3", label: "RBAC roles" },
+      { value: "204", label: "automated tests" },
+      { value: "87%", label: "backend coverage" },
+    ],
+    ownership:
+      "Graduate software design team project. My work spanned the FastAPI backend, JWT role-based access control, the Vitest and Pytest suites, and the GitHub Actions to Docker to Kubernetes deployment path.",
+    stack: ["FastAPI", "React", "TypeScript", "MongoDB", "JWT", "Pytest", "Vitest", "Docker", "Kubernetes", "GitHub Actions"],
+    links: [
+      { label: "Read the case study", href: "/case-studies/terrapin-events.html" },
+      { label: "GitHub" },
+    ],
+    diagram: "k8s",
+  },
   {
     id: "concierge",
-    kind: "Retrieval-augmented generation",
-    title: "AI Concierge for this portfolio",
-    summary:
-      "The assistant in the corner of this page. It does not free-associate about me: every answer is grounded in a markdown knowledge base that is chunked at build time, ranked with a BM25 implementation written from scratch, and handed to Claude with instructions to refuse anything outside the retrieved context.",
-    points: [
-      "Retrieval is visible: each reply lists the sections it was built from.",
-      "Streams tokens over server-sent events from a Vercel Function; the browser never sees the API key.",
-      "Guardrails in the prompt and the code: no personal or salary questions, short answers, rate limiting per IP.",
-      "Zero runtime dependencies on the front end; the whole RAG loop is about 200 lines of TypeScript.",
+    kind: "AI engineering · Retrieval-augmented generation",
+    title: "Ask Abhigna AI — Portfolio RAG Assistant",
+    story:
+      "The assistant in the corner of this page. Every answer is grounded in a curated knowledge base, ranked with a BM25 implementation written from scratch, answered with the best-matching sentences quoted verbatim, and returned with citations to the sections it used. No paid AI API; in local development it can hand the same context to an open-weight model through Ollama.",
+    metrics: [
+      { value: "BM25", label: "retrieval, from scratch" },
+      { value: "top-5", label: "sections per answer" },
+      { value: "$0", label: "AI API cost" },
+      { value: "SSE", label: "streamed responses" },
     ],
-    stack: ["TypeScript", "Vercel Functions", "Anthropic Claude API", "BM25", "SSE"],
+    ownership:
+      "Solo. Knowledge base, chunking, BM25 retrieval, extractive answer composition, guardrails, streaming function, rate limiting, local-model option, and the chat UI.",
+    stack: ["TypeScript", "Vercel Functions", "BM25", "Extractive QA", "Ollama (local)", "Server-sent events"],
     links: [
       { label: "Try it", href: "#chat-open" },
       { label: "Read the code", href: "https://github.com/KandalaAbhigna/Portfolio/tree/main/api" },
     ],
     diagram: "rag",
   },
-  {
-    id: "t20-ml",
-    kind: "Machine learning in production",
-    title: "T20 stock-scoring pipeline",
-    summary:
-      "The ML side of the Siddhantha T20 platform: LightGBM models scoring about 4,500 tickers every trading day, run as containerized tasks on AWS and served to a live dashboard. Built as one of two engineers.",
-    points: [
-      "Five-stage pipeline (download, dataset, features, predict, stats) on ECS Fargate, orchestrated by Step Functions and scheduled by EventBridge.",
-      "Found a silent failure: Step Functions reported SUCCEEDED on failed steps because the error branch ended with End: true instead of a Fail state. Fixed across three pipelines.",
-      "Backtested a proposed swing-trading strategy and delivered a no-go (profit factor 0.84, 32.7% win rate) that stopped further build-out.",
-    ],
-    stack: ["Python", "LightGBM", "AWS ECS Fargate", "Step Functions", "Lambda", "S3", "RDS"],
-    links: [{ label: "Full project below", href: "#projects" }],
-    diagram: "pipeline",
-    compact: true,
-  },
 ];
 
-export const projects: Project[] = [
+export const depth: DepthArea[] = [
   {
-    id: "t20",
-    title: "Siddhantha T20",
-    subtitle: "Cloud-native stock prediction platform",
-    period: "Jan – Jun 2026",
-    role: "One of two engineers, reporting to the tech lead",
-    summary:
-      "Scores about 4,500 tickers across five market universes with LightGBM models and serves daily Top-20 picks to a live web dashboard.",
+    name: "Backend",
+    claim: "APIs that survive real clients.",
     points: [
-      "Automated the end-to-end pipeline on ECS Fargate, Step Functions, and EventBridge, replacing manual daily runs.",
-      "Built the Flask REST API over S3 and RDS MySQL, served through Lambda with a pre-compute pattern, and the React/TypeScript dashboard it powers.",
-      "Extended coverage from 3 to 5 universes and added the Russell 1000 (135,000+ feature rows, 451 tickers), fixing two latent production bugs.",
-      "Supervised and code-reviewed four interns: a prioritized 10-item review and a strict-TypeScript reference implementation with handover docs.",
+      "27-endpoint FastAPI service with JWT auth and three-role RBAC (Admin, Organizer, Participant) on Terrapin Events.",
+      "JSON-schema validation across five MongoDB collections on Digital Time Capsule so bad writes fail at the boundary.",
+      "Pagination, sort, and filter contracts in the strict-TypeScript reference implementation I wrote for T20's admin API.",
     ],
-    stack: ["Python", "Flask", "React", "TypeScript", "LightGBM", "AWS"],
-    links: [{ label: "Private client repo" }],
   },
   {
-    id: "terrapin",
-    title: "Terrapin Events",
-    subtitle: "Campus event management system",
-    period: "Graduate software design project",
-    role: "Full-stack, testing, and CI/CD",
-    summary:
-      "Organizers submit events for admin approval, participants register with an automated waitlist, and the system emails confirmations, QR-code tickets, and feedback requests.",
+    name: "Cloud",
+    claim: "Pick the compute that fits the job.",
     points: [
-      "FastAPI backend with 27 REST endpoints and JWT role-based access control (Admin, Organizer, Participant); 14-page React/TypeScript front end.",
-      "110 Vitest and 94 Pytest tests (87% backend coverage).",
-      "GitHub Actions CI/CD builds and pushes Docker images and deploys to Kubernetes with Nginx ingress, cert-manager TLS, secrets, and pod autoscaling (2–10 replicas).",
+      "Containers for batch: T20's dataset build needs 8 GB RAM, so it runs as ECS Fargate tasks on a schedule and costs nothing between runs.",
+      "Serverless for reads: the API is a Lambda that reads small precomputed JSON, because Lambda cannot load large parquet files cheaply.",
+      "S3 for artifacts, RDS MySQL for relational state, ECR for container images, IAM for access.",
     ],
-    stack: ["React", "TypeScript", "FastAPI", "MongoDB", "Docker", "Kubernetes", "GitHub Actions"],
-    links: [{ label: "GitHub" }],
   },
   {
-    id: "capsule",
-    title: "Digital Time Capsule",
-    subtitle: "Multimedia sharing web app",
-    period: "MERN stack",
-    role: "Solo, end to end",
-    summary:
-      "Create and share time capsules of photos, text, and music with friend requests, contributor permissions, and privacy controls.",
+    name: "Reliability",
+    claim: "Verify, do not assume.",
     points: [
-      "25+ RESTful endpoints for authentication, capsule CRUD, friends, access control, and media storage; JSON schema validation across five MongoDB collections.",
-      "8-page React front end with reusable components; deployed on AWS EC2 behind Nginx, owning the full release path on Linux.",
+      "Found that Step Functions reported SUCCEEDED when a step failed (error branch ended with End: true, not a Fail state). Fixed across three pipelines.",
+      "Smoke-test small before running big; confirm S3 timestamps, exit codes, and row counts before calling a task done.",
+      "Strict dev/prod separation; never push to main; commit before long runs so the ECR image matches the code.",
     ],
-    stack: ["React", "Node.js", "Express.js", "MongoDB", "AWS EC2", "Nginx"],
-    links: [{ label: "GitHub" }],
+  },
+  {
+    name: "DevOps",
+    claim: "A deploy path someone else can run.",
+    points: [
+      "GitHub Actions builds and pushes Docker images and deploys to Kubernetes with Nginx ingress, cert-manager TLS, secrets, and pod autoscaling (2–10 replicas).",
+      "Multi-arch awareness: Apple Silicon builds need --platform linux/amd64 for Fargate, a lesson learned in production.",
+      "Known gap on T20, and the first thing I would fix: Step Functions, ECS task definitions, and EventBridge rules live only in the console. They belong in version control.",
+    ],
+  },
+  {
+    name: "Testing",
+    claim: "Tests as a CI gate, not a checkbox.",
+    points: [
+      "110 Vitest and 94 Pytest tests on Terrapin Events, 87% backend coverage, run on every push.",
+      "Unit tests for data-structure modules at Skolar; backtest harnesses on T20 that turned a strategy proposal into a measurable no-go.",
+      "Code review as a habit: GitHub PR reviews at Firstsource; a prioritized 10-item review for four interns on T20.",
+    ],
+  },
+  {
+    name: "AI engineering",
+    claim: "A language model is a component, not a product.",
+    points: [
+      "This site's assistant: BM25 retrieval over a curated knowledge base, sentence-level extractive answers so nothing is invented, citations shown to the visitor, optional local model via Ollama.",
+      "Guardrails in code and prompt: input caps, per-IP rate limiting, refusal of personal and salary questions, safe fallback when retrieval is weak.",
+      "Next: an evaluation set with retrieval hit-rate and answer-faithfulness scores, so the assistant itself becomes a measurable case study.",
+    ],
   },
 ];
 
@@ -134,8 +169,8 @@ export const jobs: Job[] = [
     location: "Remote",
     period: "May 2024 – Dec 2024",
     points: [
-      "Developed Python scripts automating recurring data-processing workflows for a cross-functional team of analysts and ML engineers, cutting manual effort and improving the reliability of scheduled jobs.",
-      "Led code reviews on GitHub pull requests with specific, actionable feedback aligned to team SDLC standards; authored technical documentation that shortened review cycles.",
+      "Python automation for recurring data-processing workflows used by analysts and ML engineers; improved reliability of scheduled jobs.",
+      "Code review on GitHub pull requests and technical documentation that improved consistency and handoffs.",
     ],
   },
   {
@@ -144,8 +179,8 @@ export const jobs: Job[] = [
     location: "Hyderabad, India",
     period: "Jun 2023 – Nov 2023",
     points: [
-      "Built a complete internal research web page from scratch: layout, components, styling, form handling, and client-side state.",
-      "Built RESTful APIs with TypeScript and Node.js, integrated with backend MySQL services, and delivered features on schedule in Agile sprints with a distributed team.",
+      "Built an internal research web interface from scratch; developed REST APIs with TypeScript and Node.js over MySQL.",
+      "Agile sprints with a distributed team: planning, standups, code review.",
     ],
   },
   {
@@ -154,25 +189,15 @@ export const jobs: Job[] = [
     location: "Remote",
     period: "Oct 2022 – Dec 2022",
     points: [
-      "Implemented core data structures and algorithms in Python and integrated them into the project codebase.",
-      "Wrote documented, unit-tested TypeScript following SDLC guidelines, using Docker containers and participating in code reviews.",
+      "Implemented and documented Python data-structure and algorithm modules on Linux; TypeScript with unit tests and Docker containers.",
     ],
   },
 ];
 
-export const skillGroups: { name: string; items: string[] }[] = [
-  { name: "Languages", items: ["Python", "TypeScript", "JavaScript", "Java", "C++", "SQL", "HTML", "CSS"] },
-  { name: "Backend & APIs", items: ["FastAPI", "Flask", "Node.js", "Express.js", "REST design", "JWT auth", "RBAC", "Microservices"] },
-  { name: "Frontend", items: ["React", "TypeScript", "Vitest", "Accessible UI", "Responsive layout"] },
-  { name: "Cloud & DevOps", items: ["AWS EC2", "ECS Fargate", "Lambda", "S3", "RDS", "Step Functions", "EventBridge", "IAM", "Docker", "Kubernetes", "GitHub Actions", "Linux"] },
-  { name: "Data & ML", items: ["MySQL", "PostgreSQL", "MongoDB", "Pandas", "NumPy", "Scikit-Learn", "LightGBM", "PyTorch", "TensorFlow"] },
-  { name: "AI engineering", items: ["Anthropic Claude API", "RAG", "Prompt design", "BM25 retrieval", "SSE streaming", "Claude Code"] },
-];
-
 export const suggestedQuestions = [
-  "What did she build on AWS?",
-  "How does this concierge work?",
-  "Has she led or reviewed other engineers?",
-  "What testing has she done?",
+  "What did she own on T20 Predictor?",
+  "How does this assistant work?",
+  "What was the hardest production bug she fixed?",
+  "What testing and CI/CD has she set up?",
   "When is she available to start?",
 ];
